@@ -219,11 +219,19 @@ fn test_truncated_input_v2_partial_field_errors() {
 
 #[test]
 fn test_default_error_type_is_io_error() {
+    use std::io::Error;
+
     #[derive(BorshDeserializeIncremental, Debug, PartialEq)]
     struct E {
         #[incremental(default = 1)]
         x: u8,
     }
+
+    // Compile-time type assertion: must implement TryFrom<&[u8]> with Error = std::io::Error
+    const _: fn() = || {
+        fn assert_impl<T: TryFrom<&'static [u8], Error = Error>>() {}
+        assert_impl::<E>();
+    };
 
     let e = E::try_from(&[][..]).unwrap();
     assert_eq!(e.x, 1);
